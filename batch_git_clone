@@ -1,0 +1,67 @@
+#!/bin/bash
+# batch_git_clone
+#   This script run `git clones` for all sub-directories of the target repositories.
+#
+# * Rev.8: 2022-11-26 (Sat)
+# * Rev.7: 2021-05-31 (Mon)
+# * Rev.6: 2021-05-27 (Thu)
+# * Rev.5: 2020-12-15 (Tue)
+# * Rev.4: 2020-12-09 (Wed)
+# * Rev.3: 2020-11-14 (Sat)
+# * Rev.2: 2020-03-01 (Sun)
+# * Draft: 2019-11-11 (Mon)
+#
+# Prerequisites
+#   * Understanding of the basic git commands (clone, pull, and push).
+#   * To change target the repositories, edit target_repositories.cfg delimited by space.
+#
+# Usage
+#   $ chmod +x batch_git_clone
+#   $ ./batch_git_clone
+#
+# Doing it manually
+#   You have a Github user ID 'your_id' and 
+#       want to clone everything in your repository "my_repository".
+#   Run
+#     $ cd ~/github/
+#     $ cd my_repository/
+#     $ git clone https://github.com/your_id/my_repository.git
+#
+#   for all target repositories.
+#
+# How to customize this script for yourself
+#   Step 1. Change github_user_id to your_id.
+#     github_user_id='your_id'
+#   Step 2. Change the list of target_repositories to YOUR target repositories.
+#     Say your target repositories are:
+#       https://github.com/your_id/my_repository_1
+#       https://github.com/your_id/my_repository_2
+#         ...
+#       https://github.com/your_id/my_repository_n
+#     Change the list to:
+#       target_repositories="my_repository_1 my_repository_2 ... my_repository_n"
+#     Note each value is delimited by a white space.
+
+# Don't change part this
+#   https://stackoverflow.com/questions/9146305/save-a-text-file-in-a-variable-in-bash
+TARGET_REPOSITORIES=$(<target_repositories.cfg)
+#TARGET_REPOSITORIES="certificates environments tools"  # Debug
+echo "TARGET_REPOSITORIES: $TARGET_REPOSITORIES"
+#exit 0  # Debug
+
+run() {
+  COMMAND=$1
+  echo $COMMAND
+  eval $COMMAND
+}
+
+#GITHUB_USER_ID='aimldl'  # Debug
+GITHUB_USER_ID=$(<github_user_id.cfg)
+echo "GITHUB_USER_ID=$GITHUB_USER_ID"
+#exit 0  # Debug
+
+# Don't change this part
+for REPOSITORY in ${TARGET_REPOSITORIES}; do
+  run "git clone https://github.com/${GITHUB_USER_ID}/${REPOSITORY}.git"
+done
+# Don't change this part
