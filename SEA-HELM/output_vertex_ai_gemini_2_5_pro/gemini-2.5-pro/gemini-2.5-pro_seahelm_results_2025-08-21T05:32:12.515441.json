@@ -1,0 +1,10 @@
+{
+  "id": {
+    "nlu": {
+      "sentiment": {
+        "normalized_accuracy": 0,
+        "error": "Failed to run evaluation for task"
+      }
+    }
+  }
+}
