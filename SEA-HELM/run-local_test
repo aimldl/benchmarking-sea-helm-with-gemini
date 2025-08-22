@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configure
-MODEL="meta-llama/Llama-3-2-3B-Instruct"
+MODEL_NAME="meta-llama/Llama-3-2-3B-Instruct"
 OUTPUT_DIR="output_local_test"
 MODEL_TYPE="litellm"
 
@@ -18,4 +18,5 @@ if [ ! -x "./run_evaluation.sh" ]; then
 fi
 
 # Run
-./run_evaluation.sh "$MODEL" "$OUTPUT_DIR" "$MODEL_TYPE"
+python seahelm_evaluation.py --tasks seahelm --output_dir $OUTPUT_DIR --model_type litellm --model_name $MODEL_NAME --model_args "api_provider=ollama,base_url=http://localhost:11434"
+#./run_evaluation.sh "$MODEL_NAME" "$OUTPUT_DIR" "$MODEL_TYPE"

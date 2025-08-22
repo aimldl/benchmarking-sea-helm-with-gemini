@@ -7,7 +7,7 @@ set -euo pipefail
 # --- Main Function ---
 main() {
     # Set variables with defaults that can be overridden by command-line arguments.
-    local model="${1:-meta-llama/Meta-Llama-3.1-8B-Instruct}"
+    local model_name="${1:-meta-llama/Meta-Llama-3.1-8B-Instruct}"
     local output_base_dir="${2:-results}"
     local model_type="${3:-vllm}"
     
@@ -28,7 +28,7 @@ main() {
 
     local rerun_results_arg=""
     if [ "$rerun_cached_results" = true ]; then
-        rerun_results_arg="--rerun_cached_cached_results"
+        rerun_results_arg="--rerun_cached_results"
     fi
 
     # --- Create Output Directory ---
@@ -52,16 +52,25 @@ main() {
         "python" "$python_script"
         "--tasks" "$tasks"
         "--output_dir" "$output_dir"
-        "--model_name" "$model"
+        "--model_name" "$model_name"
         "--model_type" "$model_type"
         "$base_model_arg"
         "$rerun_results_arg"
     )
 
+    #if [ -n "$base_model_arg" ]; then
+    #    seahelm_eval_args+=("$base_model_arg")
+    #fi
+    #if [ -n "$rerun_results_arg" ]; then
+    #    seahelm_eval_args+=("$rerun_results_arg")
+    #fi
+
     # Conditionally add --model_args for vllm
     # LiteLLM and OLLama don't need this argument
     if [[ "$model_type" == "vllm" ]]; then
         seahelm_eval_args+=("--model_args" "dtype=bfloat16,enable_prefix_caching=True,tensor_parallel_size=1")
+    elif [[ "$model_type" == "litellm" ]]; then
+        seahelm_eval_args+=("--model_args" "api_provider=ollama,base_url=http://localhost:11434")
     fi
 
     echo "Running evaluation command:"
@@ -71,6 +80,8 @@ main() {
     # Execute the final command.
     "${seahelm_eval_args[@]}"
 }
+
+# python seahelm_evaluation.py --tasks seahelm --output_dir $OUTPUT_DIR --model_type litellm --model_name $MODEL_NAME --model_args "api_provider=ollama,base_url=http://localhost:11434"
 
 # Run the main function with all provided arguments.
 main "$@"

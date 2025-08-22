@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Configure
 #MODEL="vertex_ai/gemini-2.5-pro"
-MODEL="vertex_ai/gemini-2.5-flash"
+MODEL_NAME="vertex_ai/gemini-2.5-flash"
 OUTPUT_DIR="output_gemini"
 MODEL_TYPE="litellm"
 
@@ -19,4 +19,5 @@ if [ ! -x "./run_evaluation.sh" ]; then
 fi
 
 # Run
-./run_evaluation.sh "$MODEL" "$OUTPUT_DIR" "$MODEL_TYPE"
+python seahelm_evaluation.py --tasks seahelm --output_dir $OUTPUT_DIR --model_type litellm --model_name $MODEL_NAME --model_args "api_provider=ollama,base_url=http://localhost:11434"
+#./run_evaluation.sh "$MODEL_NAME" "$OUTPUT_DIR" "$MODEL_TYPE"
