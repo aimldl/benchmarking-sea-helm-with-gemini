@@ -1,0 +1,22 @@
+#!/bin/bash
+# run-gemini
+#   runs an evaluation with a Gemini model configuration.
+
+set -euo pipefail
+
+# Configure
+#MODEL="vertex_ai/gemini-2.5-pro"
+MODEL="vertex_ai/gemini-2.5-flash"
+OUTPUT_DIR="output_gemini"
+MODEL_TYPE="litellm"
+
+# Ensure the main script exists and is executable.
+if [ ! -x "./run_evaluation.sh" ]; then
+    echo "Error: 'run_evaluation.sh' was not found or is not executable." >&2
+    echo "Ensure it exists in the current directory and has execute permissions." >&2
+    echo "  $ chmod +x run_evaluation.sh" >&2
+    exit 1
+fi
+
+# Run
+./run_evaluation.sh "$MODEL" "$OUTPUT_DIR" "$MODEL_TYPE"

@@ -1,58 +1,76 @@
 #!/bin/bash
+# run_evaluation.sh
+# A reusable base script to run seahelm evaluations.
 
-# Add a list of models (either local path or HuggingFace model id) to be evaluated
-MODEL="meta-llama/Meta-Llama-3.1-8B-Instruct"
+set -euo pipefail
 
-OUTPUT="results"
+# --- Main Function ---
+main() {
+    # Set variables with defaults that can be overridden by command-line arguments.
+    local model="${1:-meta-llama/Meta-Llama-3.1-8B-Instruct}"
+    local output_base_dir="${2:-results}"
+    local model_type="${3:-vllm}"
+    
+    # --- Configuration Variables (Hardcoded) ---
+    # If needed, take in input argument with the syntax 
+    # "${variable:-default_value}"
+    local python_script="seahelm_evaluation.py"
+    local tasks="seahelm"
+    local is_base_model=false
+    local rerun_cached_results=false
 
-PYTHON_SCRIPT="seahelm_evaluation.py"
+    # --- Prepare Command-Line Arguments ---
+    # Conditionally set arguments based on the boolean flags.
+    local base_model_arg=""
+    if [ "$is_base_model" = true ]; then
+        base_model_arg="--base_model"
+    fi
 
-IS_BASE_MODEL=false
-RERUN_CACHED_RESULTS=false
+    local rerun_results_arg=""
+    if [ "$rerun_cached_results" = true ]; then
+        rerun_results_arg="--rerun_cached_cached_results"
+    fi
 
-if [ $IS_BASE_MODEL == "true" ]; then
-    BASE_MODEL="--base_model"
-else
-    BASE_MODEL=""
-fi
+    # --- Create Output Directory ---
+    # The output directory name is derived from the model name.
+    local output_dir="${output_base_dir}/$(basename "${model}")"
+    mkdir -p "${output_dir}"
+    echo "Output directory created: ${output_dir}"
 
-if [ $RERUN_CACHED_RESULTS = true ]; then
-    RERUN_RESULTS="--rerun_cached_results"
-else
-    RERUN_RESULTS=""
-fi
+    # --- Check for Dependencies ---
+    if [ ! -f "$python_script" ]; then
+        echo "Error: Python script '$python_script' not found!" >&2
+        exit 1
+    fi
 
-# Create output dir at ${result_dir}/<exp name>/<timestamp>
-output_dir="${OUTPUT}/$(echo ${MODEL} | awk -F/ '{print $(NF-1)}')"
-mkdir -p "${output_dir}"
-echo "Output directory: ${output_dir}"
+    # --- Run the Evaluation ---
+    # Set environment variables for the evaluation process.
+    export LITELLM_LOG="ERROR"
 
-PYTHON_SCRIPT="seahelm_evaluation.py"
-export LITELLM_LOG="ERROR"
+    # Use an array to build the command for clarity and correct quoting.
+    local seahelm_eval_args=(
+        "python" "$python_script"
+        "--tasks" "$tasks"
+        "--output_dir" "$output_dir"
+        "--model_name" "$model"
+        "--model_type" "$model_type"
+        "$base_model_arg"
+        "$rerun_results_arg"
+    )
 
-if [ $IS_BASE_MODEL == "true" ]; then
-    BASE_MODEL="--base_model"
-else
-    BASE_MODEL=""
-fi
+    # Conditionally add --model_args for vllm
+    # LiteLLM and OLLama don't need this argument
+    if [[ "$model_type" == "vllm" ]]; then
+        seahelm_eval_args+=("--model_args" "dtype=bfloat16,enable_prefix_caching=True,tensor_parallel_size=1")
+    fi
 
-if [ $RERUN_CACHED_RESULTS = true ]; then
-    RERUN_RESULTS="--rerun_cached_results"
-else
-    RERUN_RESULTS=""
-fi
+    echo "Running evaluation command:"
+    printf "%s " "${seahelm_eval_args[@]}"
+    echo ""
 
-seahelm_eval_args=(
-    "python $PYTHON_SCRIPT"
-    --tasks seahelm
-    --output_dir $output_dir
-    --model_name $MODEL
-    --model_type vllm
-    --model_args "dtype=bfloat16,enable_prefix_caching=True,tensor_parallel_size=1" 
-    $BASE_MODEL
-    $RERUN_RESULTS
-)
+    # Execute the final command.
+    "${seahelm_eval_args[@]}"
+}
 
-seahelm_eval_cmd="${seahelm_eval_args[@]}"
-
-$seahelm_eval_cmd
+# Run the main function with all provided arguments.
+main "$@"
